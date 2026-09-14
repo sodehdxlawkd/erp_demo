@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const HOST = '127.0.0.1';
 const START_PORT = Number(process.env.PORT) || 8123;
-const INDEX = 'index.html';                       // 입구 (앱으로 자동 이동)
+const INDEX = 'index.html';                       // 시작 화면
 const APP   = '인사총무ERP_교육용가상자료.html';   // 실제 앱
 
 const TYPES = {
@@ -89,7 +89,8 @@ server.listen(port, HOST, () => {
   console.log('  폴더 : ' + ROOT);
   console.log('  중지 : Ctrl + C');
   console.log('');
-  console.log(`  ${INDEX} → ${APP} 로 자동 이동합니다.`);
+  console.log(`  시작 화면 : ${INDEX}`);
+  console.log(`  앱 바로가기: http://${HOST}:${port}/${encodeURIComponent(APP)}`);
   console.log('  이 주소로 열면 data/가상_인사총무.json 을 실제로 읽습니다.');
   console.log('');
 });

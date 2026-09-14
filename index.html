@@ -1,102 +1,268 @@
 <!-- ============================================================
      🎓 교육용 가상 자료 (EDUCATIONAL / FICTIONAL DATA ONLY)
-     가상 회사 「한빛상사(주)」 · 실존 회사·개인·급여와 무관합니다.
+     가상 회사 「한빛상사(주)」 · 실존 회사·개인·급여 정보와 무관합니다.
 
-     이 파일은 '입구'입니다. 실제 앱은 아래 파일입니다.
+     이 파일은 '시작 화면'입니다. 실제 앱은 아래 파일입니다.
        인사총무ERP_교육용가상자료.html
 
      앱 파일명을 index.html 로 바꾸지 않는 이유:
      파일명 자체가 PRD §8의 '교육용 가상 자료 표시 4곳' 중 하나이기 때문입니다.
+
+     디자인 기준: DESIGN.md (색·글꼴·여백·버튼 토큰을 그대로 따릅니다)
      ============================================================ -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>가상 인사총무 ERP — 교육용</title>
-<!-- 자바스크립트가 막혀 있어도 1초 뒤 자동 이동 -->
-<meta http-equiv="refresh" content="1; url=%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4ERP_%EA%B5%90%EC%9C%A1%EC%9A%A9%EA%B0%80%EC%83%81%EC%9E%90%EB%A3%8C.html">
+<title>가상 인사총무 ERP — 교육용 시작 화면</title>
 <style>
+/* ── DESIGN.md §1 색 토큰 ───────────────────────── */
 :root{
   color-scheme: light;
-  --bg:#f5f5f2; --surface:#fcfcfb; --border:#e3e2dd;
-  --text-1:#0b0b0b; --text-2:#52514e; --text-3:#85847e; --series-1:#2a78d6;
+  --bg:#f5f5f2; --surface:#fcfcfb; --surface-2:#f0efec;
+  --border:#e3e2dd;
+  --text-1:#0b0b0b; --text-2:#52514e; --text-3:#85847e;
+  --series-1:#2a78d6; --series-soft:#cde2fb;
+  --good:#0ca30c; --warn:#fab219;
+  --good-bg:#e7f6e7; --warn-bg:#fdf3dd;
+  --good-ink:#0a6b0a; --warn-ink:#7a5600;
   --banner-bg:#fff3d1; --banner-ink:#6b4e00; --banner-bd:#e8d08a;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme: dark;
-    --bg:#121211; --surface:#1a1a19; --border:#33332f;
-    --text-1:#ffffff; --text-2:#c3c2b7; --text-3:#8f8e85; --series-1:#3987e5;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232320;
+    --border:#33332f;
+    --text-1:#ffffff; --text-2:#c3c2b7; --text-3:#8f8e85;
+    --series-1:#3987e5; --series-soft:#1c3a5e;
+    --good:#0ca30c; --warn:#fab219;
+    --good-bg:#14331a; --warn-bg:#3a2f10;
+    --good-ink:#7ddc7d; --warn-ink:#f2c65c;
     --banner-bg:#3a2f10; --banner-ink:#f0d99a; --banner-bd:#5c4a1a;
   }
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  background:var(--bg); color:var(--text-1); min-height:100vh;
+  background:var(--bg); color:var(--text-1);
   font-family:"Pretendard","Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   font-size:14px; line-height:1.55;
-  display:flex; flex-direction:column;
 }
+/* DESIGN.md §12-② 고정폭 — 숫자·식별번호에만, 한글에는 쓰지 않음 */
+.mono{font-family:ui-monospace,"Cascadia Mono","Consolas","D2Coding",monospace;
+  letter-spacing:.02em; font-variant-numeric:tabular-nums}
+
+/* ── 교육용 배너 (PRD §8 · 항상 보임) ─────────────── */
 #edu-banner{
+  position:sticky; top:0; z-index:50;
   background:var(--banner-bg); color:var(--banner-ink);
   border-bottom:1px solid var(--banner-bd);
-  padding:7px 16px; font-size:12.5px; font-weight:600; text-align:center;
+  padding:7px 16px; font-size:12.5px; font-weight:600;
+  text-align:center; letter-spacing:-.01em;
 }
-main{
-  flex:1; display:flex; align-items:center; justify-content:center; padding:24px;
-}
-.card{
-  background:var(--surface); border:1px solid var(--border); border-radius:12px;
-  padding:32px; max-width:520px; width:100%; text-align:center;
-}
-h1{font-size:20px; margin:0 0 6px; letter-spacing:-.02em}
-p.sub{margin:0 0 24px; color:var(--text-2); font-size:13px}
-a.go{
+#edu-banner span{font-weight:400; opacity:.85}
+
+/* ── 레이아웃 (DESIGN.md §3 여백) ──────────────────── */
+.wrap{max-width:900px; margin:0 auto; padding:24px 24px 60px}
+@media (max-width:760px){ .wrap{padding:16px 14px 50px} }
+
+header.top{margin:8px 0 22px}
+header.top h1{font-size:20px; font-weight:700; letter-spacing:-.02em; margin:0 0 4px}
+header.top p{margin:0; color:var(--text-2); font-size:13px}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; margin-bottom:14px}
+.card h2{margin:0 0 2px; font-size:14.5px; font-weight:700; letter-spacing:-.01em}
+.card p.sub{margin:0 0 14px; font-size:12px; color:var(--text-3)}
+
+.grid{display:grid; gap:14px}
+.cols2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
+
+/* ── 시작 카드 ─────────────────────────────────── */
+.hero{text-align:center; padding:30px 22px}
+.hero h2{font-size:24px; letter-spacing:-.02em; margin-bottom:6px}
+.hero p.sub{font-size:13px; margin-bottom:20px}
+a.btn-primary{
   display:inline-block; background:var(--series-1); color:#fff; text-decoration:none;
-  padding:11px 22px; border-radius:8px; font-size:14px; font-weight:600;
+  padding:11px 24px; border-radius:8px; font-size:14px; font-weight:600; min-height:32px;
 }
-a.go:hover{filter:brightness(1.08)}
-.note{
-  margin-top:24px; padding-top:18px; border-top:1px solid var(--border);
-  font-size:12px; color:var(--text-3); text-align:left; line-height:1.7;
+a.btn-primary:hover{filter:brightness(1.08)}
+
+/* ── 실행 방식 안내 ─────────────────────────────── */
+.mode{display:flex; gap:10px; align-items:flex-start; padding:12px 14px;
+  border-radius:8px; font-size:12.5px; margin-top:16px; text-align:left}
+.mode.on{background:var(--good-bg); color:var(--good-ink)}
+.mode.off{background:var(--surface-2); color:var(--text-2)}
+.mode b{display:block; margin-bottom:2px}
+
+/* ── 타일 ─────────────────────────────────────── */
+.tile{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px}
+.tile .lab{font-size:12px; color:var(--text-2); margin-bottom:6px}
+.tile .val{font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1.15}
+.tile .val .u{font-size:14px; font-weight:600; color:var(--text-2); margin-left:2px}
+.tile .foot{font-size:11.5px; color:var(--text-3); margin-top:6px}
+
+/* ── 표 ───────────────────────────────────────── */
+.tablewrap{overflow-x:auto; margin:0 -2px}
+table{border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap}
+th,td{padding:8px 10px; text-align:left; border-bottom:1px solid var(--border)}
+th{font-size:11.5px; font-weight:600; color:var(--text-3); background:var(--surface-2)}
+th:first-child{border-top-left-radius:7px} th:last-child{border-top-right-radius:7px}
+td.num,th.num{text-align:right}
+tbody tr:hover{background:var(--surface-2)}
+.footnote{margin:8px 2px 0; font-size:11px; color:var(--text-3)}
+
+/* ── 문서 목록 ─────────────────────────────────── */
+a.doc{
+  display:block; text-decoration:none; color:inherit;
+  border:1px solid var(--border); border-radius:8px; padding:12px 14px;
 }
-.note b{color:var(--text-2)}
-code{
-  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
-  background:var(--bg); padding:1px 5px; border-radius:4px; font-size:11.5px;
-}
+a.doc:hover{border-color:var(--text-3); background:var(--surface-2)}
+a.doc b{display:block; font-size:13px; margin-bottom:2px}
+a.doc span{font-size:11.5px; color:var(--text-3)}
+
+code{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  background:var(--bg); border:1px solid var(--border);
+  padding:1px 6px; border-radius:6px; font-size:11.5px}
+.steps{margin:0; padding-left:20px; font-size:12.5px; color:var(--text-2); line-height:1.9}
+.steps b{color:var(--text-1)}
 </style>
 </head>
 <body>
-<div id="edu-banner">🎓 교육용 가상 자료 — 실제 인사·급여 정보가 아닙니다 · 가상 회사 「한빛상사(주)」</div>
 
-<main>
+<!-- 교육용 표시 위치 2/4 : 항상 보이는 상단 배너 -->
+<div id="edu-banner">🎓 교육용 가상 자료 — 실제 인사·급여 정보가 아닙니다
+  <span>· 가상 회사 「한빛상사(주)」 · 모든 인물과 숫자는 창작입니다</span></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <h1>한빛상사 인사총무 ERP</h1>
+    <p>교육용 실습 버전 · 기준 2026년 9월</p>
+  </header>
+
+  <!-- ── 시작 ─────────────────────────────────── -->
+  <div class="card hero">
+    <h2>ERP가 어떻게 돌아가는지 직접 눌러봅니다</h2>
+    <p class="sub">신청 → 승인 → 숫자가 자동으로 바뀌는 과정을 체험하는 교육용 앱입니다</p>
+    <a class="btn-primary" href="%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4ERP_%EA%B5%90%EC%9C%A1%EC%9A%A9%EA%B0%80%EC%83%81%EC%9E%90%EB%A3%8C.html">앱 열기 →</a>
+    <div id="modeBox"></div>
+  </div>
+
+  <!-- ── 무엇을 배우나 ────────────────────────── -->
   <div class="card">
-    <h1>가상 인사총무 ERP</h1>
-    <p class="sub">잠시 후 자동으로 이동합니다. 넘어가지 않으면 아래를 눌러주세요.</p>
-
-    <a class="go" href="%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4ERP_%EA%B5%90%EC%9C%A1%EC%9A%A9%EA%B0%80%EC%83%81%EC%9E%90%EB%A3%8C.html">
-      앱 열기 →
-    </a>
-
-    <div class="note">
-      <b>이 파일은 입구입니다.</b> 실제 앱은
-      <code>인사총무ERP_교육용가상자료.html</code> 입니다.<br>
-      파일명 자체가 &lsquo;교육용 가상 자료&rsquo; 표시 중 하나라서 이름을 바꾸지 않았습니다.
-      <br><br>
-      <b>여는 방법 2가지</b> — 숫자는 어느 쪽이든 같습니다.<br>
-      · 앱 파일을 <b>더블클릭</b> → 📦 내장 데이터로 실행<br>
-      · <code>node 로컬서버.mjs</code> 실행 후 <code>http://127.0.0.1:8123/</code> 접속
-      → 📂 <code>data/가상_인사총무.json</code> 파일을 실제로 읽음
+    <h2>이 앱이 가르치려는 것 두 가지</h2>
+    <p class="sub">기능을 많이 보여주는 것이 목적이 아닙니다</p>
+    <div class="grid cols2">
+      <div class="tile">
+        <div class="lab">① 인사와 총무는 뼈대가 같다</div>
+        <div class="val" style="font-size:15px; line-height:1.5; font-weight:600">
+          휴가 신청과 비품 신청은<br>겉모습만 다를 뿐<br>
+          <span style="color:var(--series-1)">신청 → 승인 → 차감</span> 구조가 똑같다</div>
+      </div>
+      <div class="tile">
+        <div class="lab">② 숫자는 저장된 게 아니라 계산된 것</div>
+        <div class="val" style="font-size:15px; line-height:1.5; font-weight:600">
+          잔여연차를 어디에도 적어두지 않는다<br>
+          그래서 <span style="color:var(--series-1)">승인 한 번에</span><br>관련된 모든 숫자가 저절로 맞는다</div>
+      </div>
     </div>
   </div>
-</main>
+
+  <!-- ── 화면 4개 ─────────────────────────────── -->
+  <div class="card">
+    <h2>화면 4개 · 시점 2개</h2>
+    <p class="sub">같은 신청 1건이 직원 화면과 담당자 화면에서 다르게 보입니다</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>메뉴</th><th>영역</th><th>👤 직원 시점</th><th>🧑‍💼 담당자 시점</th></tr></thead>
+      <tbody>
+        <tr><td>🏠 홈</td><td>공통</td><td>내 잔여연차 · 연차 계산 내역</td><td>처리 대기 · 부서별 소진율 · 재고 부족</td></tr>
+        <tr><td>🌴 휴가 신청</td><td>인사</td><td>신청 · 취소</td><td>승인 / 반려</td></tr>
+        <tr><td>📦 비품 신청</td><td>총무</td><td>신청 · 취소</td><td>승인 / 반려 · 재고 현황</td></tr>
+        <tr><td>💰 급여명세</td><td>급여</td><td>내 명세서 1장</td><td>전 직원 12건 · 총액</td></tr>
+      </tbody>
+    </table></div>
+    <p class="footnote">🎓 본 데이터는 교육 목적으로 창작된 가상 자료입니다.</p>
+  </div>
+
+  <!-- ── 데이터 ───────────────────────────────── -->
+  <div class="card">
+    <h2>들어있는 가상 데이터</h2>
+    <p class="sub">가상 회사 「한빛상사(주)」 · 실존 인물·급여와 무관합니다</p>
+    <div class="grid tiles">
+      <div class="tile"><div class="lab">직원</div>
+        <div class="val mono">12<span class="u">명</span></div><div class="foot">4개 부서 × 3명</div></div>
+      <div class="tile"><div class="lab">휴가 신청</div>
+        <div class="val mono">24<span class="u">건</span></div><div class="foot">승인 14 · 대기 6 · 반려 4</div></div>
+      <div class="tile"><div class="lab">비품</div>
+        <div class="val mono">10<span class="u">종</span></div><div class="foot">신청 18건 · 재고부족 4종</div></div>
+      <div class="tile"><div class="lab">급여명세</div>
+        <div class="val mono">12<span class="u">건</span></div><div class="foot">2026년 9월 귀속</div></div>
+    </div>
+    <p class="footnote">🎓 본 데이터는 교육 목적으로 창작된 가상 자료입니다. 실제 세금·4대보험은 계산하지 않았습니다.</p>
+  </div>
+
+  <!-- ── 수업 진행 순서 ───────────────────────── -->
+  <div class="card">
+    <h2>수업에서 이 순서로 해보세요</h2>
+    <p class="sub">9단계 · 약 15분</p>
+    <ol class="steps">
+      <li>👤 <b>직원 시점</b>에서 강도현의 남은 연차 <span class="mono">12.0</span>일 확인</li>
+      <li>🌴 휴가 <b>5일 신청</b> → 잔여는 <b>아직 안 줄어듦</b> (승인 전이니까)</li>
+      <li>🧑‍💼 <b>담당자 시점으로 전환</b> → 방금 그 신청이 「처리할 신청」에 떠 있음</li>
+      <li><b>승인</b> → 잔여 <span class="mono">12.0</span> → <span class="mono">7.0</span>, 전사 소진율도 함께 움직임</li>
+      <li><b>병가를 승인</b>해보기 → 연차가 <b>안 줄어듦</b> (규정이 시스템에 박혀 있음)</li>
+      <li>대기 건을 <b>취소</b>해보기 → 기록은 <b>남고</b> 숫자는 그대로</li>
+      <li>🏠 홈에서 <b>사원 이름 클릭</b> → 그 숫자가 나온 과정이 한 줄씩</li>
+      <li>💰 <b>급여명세</b> → 인사·총무·급여가 사번 하나로 묶여 있음</li>
+      <li>↺ <b>데이터 초기화</b> → 다음 수업을 위해 리셋</li>
+    </ol>
+  </div>
+
+  <!-- ── 실행 방법 ────────────────────────────── -->
+  <div class="card">
+    <h2>여는 방법 2가지</h2>
+    <p class="sub">숫자는 어느 쪽이든 완전히 같습니다</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>방법</th><th>데이터 출처</th><th>언제 쓰나</th></tr></thead>
+      <tbody>
+        <tr><td>앱 파일 <b>더블클릭</b></td><td>📦 파일 안의 내장 데이터</td><td><b>수업할 때</b> — 가장 간편</td></tr>
+        <tr><td><code>node 로컬서버.mjs</code></td><td>📂 <code>data/가상_인사총무.json</code></td>
+            <td><b>데이터 구조 설명할 때</b> — 파일을 고치면 화면이 바뀜</td></tr>
+      </tbody>
+    </table></div>
+    <p class="footnote">브라우저 보안 정책상, 더블클릭으로 연 페이지는 내 컴퓨터의 파일을 읽을 수 없습니다.
+      로컬 서버를 켜면 웹사이트처럼 취급되어 읽을 수 있게 됩니다.</p>
+  </div>
+
+  <!-- ── 문서 ─────────────────────────────────── -->
+  <div class="card">
+    <h2>함께 보는 문서</h2>
+    <p class="sub">규칙과 <b>그렇게 정한 이유</b>까지 적어 두었습니다</p>
+    <div class="grid cols2">
+      <a class="doc" href="PRD.md"><b>📋 PRD.md</b><span>목적 · 기능 · 데이터 · 계산규칙 · 확인기준 (정본)</span></a>
+      <a class="doc" href="%EB%8D%B0%EC%9D%B4%ED%84%B0%EC%95%88%EB%82%B4.md"><b>📊 데이터안내.md</b><span>직원·휴가·급여 표를 사번으로 연결하는 법</span></a>
+      <a class="doc" href="%ED%99%95%EC%9D%B8%EC%98%88%EC%8B%9C.md"><b>✅ 확인예시.md</b><span>직원 한 명으로 따라가는 입력값·예상결과</span></a>
+      <a class="doc" href="DESIGN.md"><b>🎨 DESIGN.md</b><span>색 · 글꼴 · 여백 · 버튼 기준</span></a>
+      <a class="doc" href="%EB%A0%88%ED%8D%BC%EB%9F%B0%EC%8A%A4.md"><b>🔍 레퍼런스.md</b><span>flex · Frappe HR · Odoo 공식 문서 조사</span></a>
+      <a class="doc" href="data/%EA%B0%80%EC%83%81_%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4.json"><b>📂 가상_인사총무.json</b><span>앱 데이터 사본 (항목명 한글)</span></a>
+    </div>
+  </div>
+
+</div>
 
 <script>
-  // 바로 이동 (meta refresh보다 빠름)
-  location.replace('%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4ERP_%EA%B5%90%EC%9C%A1%EC%9A%A9%EA%B0%80%EC%83%81%EC%9E%90%EB%A3%8C.html');
+/* 지금 어떤 방식으로 열었는지 알려줍니다 (PRD §4-7) */
+(function(){
+  const file = location.protocol === 'file:';
+  document.getElementById('modeBox').innerHTML = file
+    ? '<div class="mode off">📦<div><b>지금은 파일을 직접 열었습니다</b>'
+      + '앱은 파일 안의 내장 데이터로 작동합니다. '
+      + '<code>node 로컬서버.mjs</code> 를 실행하면 JSON 파일을 실제로 읽습니다.</div></div>'
+    : '<div class="mode on">📂<div><b>지금은 로컬 서버로 열었습니다</b>'
+      + '앱이 <code>data/가상_인사총무.json</code> 파일을 실제로 읽습니다.</div></div>';
+})();
 </script>
 </body>
 </html>
