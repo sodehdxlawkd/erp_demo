@@ -1,0 +1,387 @@
+<!-- ============================================================
+     DART 정기보고서 주요정보 조회
+     ------------------------------------------------------------
+     ⚠️ 이 화면은 금융감독원 전자공시(DART)의 '실제' 공시 데이터를
+        보여줍니다. 같은 폴더의 인사총무 ERP(가상 자료)와 다릅니다.
+
+     ⚠️ API 키는 이 파일에 없습니다.
+        로컬서버.mjs 가 .env 에서 읽어 대신 호출합니다.
+        (HTML에 키를 넣으면 페이지 소스에 그대로 노출됩니다)
+
+     실행: node 로컬서버.mjs  →  http://127.0.0.1:8123/dart.html
+     디자인 기준: DESIGN.md
+     ============================================================ -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DART 정기보고서 주요정보 조회</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f5f5f2; --surface:#fcfcfb; --surface-2:#f0efec;
+  --border:#e3e2dd;
+  --text-1:#0b0b0b; --text-2:#52514e; --text-3:#85847e;
+  --series-1:#2a78d6; --series-soft:#cde2fb;
+  --good-bg:#e7f6e7; --good-ink:#0a6b0a;
+  --warn-bg:#fdf3dd; --warn-ink:#7a5600;
+  --crit-bg:#fbe8e8; --crit-ink:#9c2020;
+  --info-bg:#eaf1fb; --info-ink:#1c4b86;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232320;
+    --border:#33332f;
+    --text-1:#ffffff; --text-2:#c3c2b7; --text-3:#8f8e85;
+    --series-1:#3987e5; --series-soft:#1c3a5e;
+    --good-bg:#14331a; --good-ink:#7ddc7d;
+    --warn-bg:#3a2f10; --warn-ink:#f2c65c;
+    --crit-bg:#3a1b1b; --crit-ink:#f09090;
+    --info-bg:#17304f; --info-ink:#a9cbf5;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text-1);
+  font-family:"Pretendard","Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:14px; line-height:1.55;
+}
+.mono{font-family:ui-monospace,"Cascadia Mono","Consolas","D2Coding",monospace;
+  letter-spacing:.02em; font-variant-numeric:tabular-nums}
+
+#src-banner{
+  position:sticky; top:0; z-index:50;
+  background:var(--info-bg); color:var(--info-ink);
+  border-bottom:1px solid var(--border);
+  padding:7px 16px; font-size:12.5px; font-weight:600; text-align:center;
+}
+#src-banner span{font-weight:400; opacity:.85}
+
+.wrap{max-width:1200px; margin:0 auto; padding:22px 24px 60px}
+@media (max-width:760px){ .wrap{padding:16px 14px 50px} }
+
+header.top{margin:4px 0 20px}
+header.top h1{font-size:20px; font-weight:700; letter-spacing:-.02em; margin:0 0 4px}
+header.top p{margin:0; color:var(--text-2); font-size:13px}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; margin-bottom:14px}
+.card h2{margin:0 0 2px; font-size:14.5px; font-weight:700; letter-spacing:-.01em}
+.card p.sub{margin:0 0 14px; font-size:12px; color:var(--text-3)}
+
+.form{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); align-items:end}
+.field{position:relative; min-width:0}
+.field label{display:block; font-size:11.5px; color:var(--text-2); margin-bottom:5px; font-weight:600}
+.field input,.field select{
+  width:100%; padding:8px 10px; border-radius:8px; font:inherit; font-size:13px;
+  border:1px solid var(--border); background:var(--bg); color:var(--text-1);
+}
+.field input:focus,.field select:focus{outline:2px solid var(--series-1); outline-offset:-1px}
+.wide{grid-column:1 / -1}
+
+button{font:inherit; cursor:pointer}
+.btn{border:1px solid var(--border); background:var(--surface-2); color:var(--text-1);
+  padding:7px 13px; border-radius:8px; font-size:13px; font-weight:600; min-height:32px}
+.btn:hover{border-color:var(--text-3)}
+.btn-primary{background:var(--series-1); border-color:var(--series-1); color:#fff}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-primary:disabled{opacity:.42; cursor:not-allowed; filter:none}
+
+/* 회사 검색 결과 */
+#sugg{
+  position:absolute; z-index:30; left:0; right:0; top:100%; margin-top:4px;
+  background:var(--surface); border:1px solid var(--border); border-radius:8px;
+  max-height:280px; overflow:auto; box-shadow:0 4px 14px rgba(0,0,0,.12);
+}
+#sugg:empty{display:none}
+#sugg button{
+  display:block; width:100%; text-align:left; border:0; background:transparent;
+  padding:8px 11px; font-size:13px; color:var(--text-1); border-bottom:1px solid var(--border);
+}
+#sugg button:last-child{border-bottom:0}
+#sugg button:hover{background:var(--series-soft)}
+#sugg .code{color:var(--text-3); font-size:11.5px; margin-left:6px}
+
+.picked{margin-top:12px; padding:10px 13px; border-radius:8px; font-size:12.5px;
+  background:var(--good-bg); color:var(--good-ink); font-weight:600}
+.picked.none{background:var(--surface-2); color:var(--text-2); font-weight:400}
+
+.msg{padding:11px 14px; border-radius:8px; font-size:12.5px; margin-bottom:14px;
+  display:flex; gap:8px; align-items:flex-start}
+.msg.err{background:var(--crit-bg); color:var(--crit-ink); font-weight:600}
+.msg.warn{background:var(--warn-bg); color:var(--warn-ink); font-weight:600}
+.msg.info{background:var(--surface-2); color:var(--text-2)}
+
+.tablewrap{overflow-x:auto; margin:0 -2px}
+table{border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap}
+th,td{padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top}
+th{font-size:11.5px; font-weight:600; color:var(--text-3); background:var(--surface-2); position:sticky; top:0}
+th:first-child{border-top-left-radius:7px} th:last-child{border-top-right-radius:7px}
+td.num,th.num{text-align:right}
+tbody tr:hover{background:var(--surface-2)}
+.rowcount{font-size:12px; color:var(--text-3); margin:0 2px 10px}
+.footnote{margin:10px 2px 0; font-size:11px; color:var(--text-3); line-height:1.6}
+.empty{padding:30px 10px; text-align:center; color:var(--text-3); font-size:13px}
+.spin{display:inline-block; width:13px; height:13px; border:2px solid var(--border);
+  border-top-color:var(--series-1); border-radius:50%; animation:sp .7s linear infinite; vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="src-banner">📊 금융감독원 전자공시(DART) <b>실제 공시 데이터</b>
+  <span>· 같은 폴더의 인사총무 ERP(교육용 가상자료)와 다른 앱입니다</span></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <h1>DART 정기보고서 주요정보 조회</h1>
+    <p>사업·분기·반기보고서에 담긴 주요 정보 27종을 회사별로 조회합니다</p>
+  </header>
+
+  <div class="card">
+    <h2>조회 조건</h2>
+    <p class="sub">회사명을 입력하면 고유번호를 찾아 줍니다</p>
+
+    <div class="form">
+      <div class="field wide">
+        <label for="q">회사명 · 영문명 · 종목코드</label>
+        <input type="text" id="q" placeholder="예) 삼성전자 · NAVER · 035420" autocomplete="off">
+        <div id="sugg"></div>
+      </div>
+
+      <div class="field">
+        <label for="year">사업연도</label>
+        <select id="year"></select>
+      </div>
+
+      <div class="field">
+        <label for="reprt">보고서 종류</label>
+        <select id="reprt">
+          <option value="11011">사업보고서 (연간)</option>
+          <option value="11012">반기보고서</option>
+          <option value="11013">1분기보고서</option>
+          <option value="11014">3분기보고서</option>
+        </select>
+      </div>
+
+      <div class="field wide">
+        <label for="api">조회할 정보</label>
+        <select id="api"></select>
+      </div>
+
+      <div class="field">
+        <button class="btn btn-primary" id="go" style="width:100%" disabled>조회하기</button>
+      </div>
+    </div>
+
+    <div class="picked none" id="picked">회사를 먼저 선택해 주세요.</div>
+  </div>
+
+  <div id="out"></div>
+
+</div>
+
+<script>
+/* ── 조회 가능한 정보 27종 ────────────────────────────────
+   주소는 실제 호출로 하나씩 확인했습니다.
+   금융감독원 '정기보고서 주요정보' 목록 기준.                    */
+const APIS = [
+  ['stockTotqySttus',                          '1. 주식의 총수 현황'],
+  ['tesstkAcqsDspsSttus',                      '2. 자기주식 취득 및 처분 현황'],
+  ['alotMatter',                               '3. 배당에 관한 사항'],
+  ['irdsSttus',                                '4. 증자(감자) 현황'],
+  ['detScritsIsuAcmslt',                       '5. 채무증권 발행실적'],
+  ['entrprsBilScritsNrdmpBlce',                '6. 기업어음증권 미상환 잔액'],
+  ['srtpdPsndbtNrdmpBlce',                     '7. 단기사채 미상환 잔액'],
+  ['cprndNrdmpBlce',                           '8. 회사채 미상환 잔액'],
+  ['newCaplScritsNrdmpBlce',                   '9. 신종자본증권 미상환 잔액'],
+  ['cndlCaplScritsNrdmpBlce',                  '10. 조건부 자본증권 미상환 잔액'],
+  ['pssrpCptalUseDtls',                        '11. 공모자금의 사용내역'],
+  ['prvsrpCptalUseDtls',                       '12. 사모자금의 사용내역'],
+  ['accnutAdtorNmNdAdtOpinion',                '13. 회계감사인의 명칭 및 감사의견'],
+  ['adtServcCnclsSttus',                       '14. 감사용역체결현황'],
+  ['accnutAdtorNonAdtServcCnclsSttus',         '15. 비감사용역 계약체결 현황'],
+  ['outcmpnyDrctrNdChangeSttus',               '16. 독립(사외)이사 및 그 변동현황'],
+  ['hyslrSttus',                               '17. 최대주주 현황'],
+  ['hyslrChgSttus',                            '18. 최대주주 변동현황'],
+  ['mrhlSttus',                                '19. 소액주주 현황'],
+  ['exctvSttus',                               '20. 임원 현황'],
+  ['empSttus',                                 '21. 직원 현황'],
+  ['unrstExctvMendngSttus',                    '22. 미등기임원 보수현황'],
+  ['drctrAdtAllMendngSttusGmtsckConfmAmount',  '23. 이사·감사 보수현황 (주주총회 승인금액)'],
+  ['drctrAdtAllMendngSttusMendngPymntamtTyCl', '25. 이사·감사 보수현황 (보수지급금액 - 유형별)'],
+  ['indvdlByPay',                              '26/28. 개인별 보수현황 (5억원 이상)'],
+  ['indvdlByPayV2',                            '27/29. 개인별 보수현황 (5억원 이상) Ver 2.0'],
+  ['otrCprInvstmntSttus',                      '30. 타법인 출자현황'],
+];
+
+/* 자주 나오는 항목은 한글로 바꿔 보여줍니다. 없는 항목은 원래 이름 그대로 둡니다. */
+const LABEL = {
+  rcept_no:'접수번호', corp_cls:'법인구분', corp_code:'고유번호', corp_name:'회사명',
+  stlm_dt:'결산기준일', se:'구분', nmpr:'인원수', fscl_year:'회계연도',
+  isu_stock_totqy:'발행할 주식의 총수', now_to_isu_stock_totqy:'현재까지 발행한 주식의 총수',
+  now_to_dcrs_stock_totqy:'현재까지 감소한 주식의 총수', istc_totqy:'유통주식수',
+  tesstk_co:'자기주식수', distb_stock_co:'유통주식수', redc:'감자', profit_incnr:'이익소각',
+  rdmstk_repy:'상환주식 상환', etc:'기타',
+  thstrm:'당기', frmtrm:'전기', lwfr:'전전기',
+  pymnt_totamt:'보수총액', psn1_avrg_pymntamt:'1인당 평균보수액', rm:'비고',
+  nm:'이름', ofcps:'직위', mendng_totamt:'보수총액',
+  mendng_totamt_ct_incls_mendng:'보수총액(비포함 보수 제외)',
+  sexdstn:'성별', birth_ym:'출생년월', rgist_exctv_at:'등기임원 여부',
+  fte_at:'상근 여부', chrg_job:'담당업무', main_career:'주요경력',
+  mxmm_shrholdr_nm:'최대주주명', posesn_stock_co:'소유주식수', qota_rt:'지분율',
+  shrholdr_co:'주주수', hold_stock_co:'보유주식수', hold_stock_rate:'보유주식 비율',
+  fyer_co:'사업연도수', adtor:'감사인', adt_opinion:'감사의견',
+  inv_prm:'출자목적', frst_acqs_amount:'최초취득금액', frst_acqs_de:'최초취득일자',
+  bsis_qy:'기초 수량', trmend_qy:'기말 수량', recent_bsns_year_fnnr_sttus_tot_assets:'총자산',
+  cptal_use_dtls:'자금사용 내역', on_dclrt_cptal_use:'신고서상 자금사용 계획',
+  real_cptal_use_sttus:'실제 자금사용 내역', dfrnc_occrrnc_resn:'차이발생 사유',
+  co_nm:'법인명', thstrm_end_shares:'기말 주식수', thstrm_end_amount:'기말 장부가액',
+  mxmm_shrholdr_relate:'최대주주와의 관계', hffc_pd:'재직기간', tenure_end_on:'임기 만료일',
+  stock_knd:'주식 종류', trmend_blce:'기말 잔액', isu_cmpny:'발행회사',
+  sm:'합계', avrg_cnwk_sdytrn:'평균 근속연수', fyer_salary_totamt:'연간 급여 총액',
+  jan_salary_am:'1인평균 급여액', rgllbr_co:'정규직 수', cnttk_co:'계약직 수',
+  sexdstn_co:'인원', tot_co:'전체 인원',
+};
+const NUMISH = /(qy|co|amount|amt|rt|rate|totqy|shares|nmpr)$/i;
+
+const KRW_TIP = '숫자는 DART가 내려주는 원문 그대로입니다(쉼표 포함).';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let picked = null;          // {code, name, stock}
+let suggTimer = null;
+
+/* ── 초기화 ─────────────────────────────────────────────── */
+(function init(){
+  const y = $('#year'), now = new Date().getFullYear();
+  for (let v = now; v >= 2015; v--) y.add(new Option(v + '년', v));
+  y.value = now - 1;                                  // 작년이 기본 (올해 사업보고서는 아직 없음)
+
+  const a = $('#api');
+  APIS.forEach(([ep, label]) => a.add(new Option(label, ep)));
+
+  if (location.protocol === 'file:') {
+    $('#out').innerHTML = '<div class="msg err">⚠️<div>이 화면은 <b>로컬 서버로 열어야</b> 작동합니다.'
+      + '<br>터미널에서 <code>node 로컬서버.mjs</code> 를 실행한 뒤'
+      + ' <b>http://127.0.0.1:8123/dart.html</b> 로 접속해 주세요.'
+      + '<br><span style="font-weight:400">DART는 브라우저에서 직접 호출할 수 없어(CORS), 서버가 대신 호출합니다.</span></div></div>';
+    $('#q').disabled = true;
+  }
+})();
+
+/* ── 회사 검색 ──────────────────────────────────────────── */
+$('#q').addEventListener('input', e => {
+  clearTimeout(suggTimer);
+  const q = e.target.value.trim();
+  if (q.length < 1) { $('#sugg').innerHTML = ''; return; }
+  suggTimer = setTimeout(() => search(q), 250);
+});
+
+async function search(q){
+  $('#sugg').innerHTML = '<button disabled><span class="spin"></span> 찾는 중…</button>';
+  try{
+    const r = await fetch('/api/corp-search?listed=1&q=' + encodeURIComponent(q));
+    const j = await r.json();
+    if (j.error) { $('#sugg').innerHTML = `<button disabled>${esc(j.error)}</button>`; return; }
+    if (!j.list.length) {
+      $('#sugg').innerHTML = '<button disabled>검색 결과가 없습니다 · 상장사만 검색합니다<br>'
+        + '<span style="font-weight:400">DART에 등록된 이름과 다를 수 있습니다. '
+        + '<b>영문명</b>(예: NAVER)이나 <b>종목코드</b>(예: 035420)로도 찾아보세요.</span></button>';
+      return;
+    }
+    $('#sugg').innerHTML = j.list.map(c =>
+      `<button type="button" data-code="${c.code}" data-name="${esc(c.name)}" data-stock="${c.stock}">
+         ${esc(c.name)}<span class="code mono">${c.stock ? c.stock + ' · ' : ''}${c.code}</span>
+         ${c.eng && c.eng !== c.name ? `<span class="code">${esc(c.eng)}</span>` : ''}</button>`).join('');
+  }catch(err){ $('#sugg').innerHTML = `<button disabled>검색 실패: ${esc(err.message)}</button>`; }
+}
+
+$('#sugg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-code]');
+  if (!b) return;
+  picked = { code: b.dataset.code, name: b.dataset.name, stock: b.dataset.stock };
+  $('#q').value = picked.name;
+  $('#sugg').innerHTML = '';
+  $('#picked').className = 'picked';
+  $('#picked').innerHTML = `✔ <b>${esc(picked.name)}</b> 선택됨 · 고유번호 <span class="mono">${picked.code}</span>`
+    + (picked.stock ? ` · 종목코드 <span class="mono">${picked.stock}</span>` : '');
+  $('#go').disabled = false;
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#q') && !e.target.closest('#sugg')) $('#sugg').innerHTML = '';
+});
+
+/* ── 조회 ───────────────────────────────────────────────── */
+$('#go').addEventListener('click', run);
+
+async function run(){
+  if (!picked) return;
+  const ep     = $('#api').value;
+  const label  = $('#api').selectedOptions[0].textContent;
+  const year   = $('#year').value;
+  const reprt  = $('#reprt').value;
+  const reprtL = $('#reprt').selectedOptions[0].textContent;
+
+  $('#go').disabled = true;
+  $('#out').innerHTML = '<div class="card"><div class="empty"><span class="spin"></span> 조회 중…</div></div>';
+
+  try{
+    const url = `/api/dart/${ep}?corp_code=${picked.code}&bsns_year=${year}&reprt_code=${reprt}`;
+    const j = await (await fetch(url)).json();
+
+    if (j.error)           return show(msg('err','⚠️', esc(j.error)));
+    if (j.status === '013') return show(msg('warn','📭',
+      `<b>조회된 데이터가 없습니다.</b><br>${esc(picked.name)}의 ${year}년 ${esc(reprtL)}에는 이 항목이 없습니다.
+       <br><span style="font-weight:400">연도나 보고서 종류를 바꿔 보세요. 해당 사항이 없는 회사도 많습니다.</span>`));
+    if (j.status !== '000') return show(msg('err','⚠️',
+      `<b>DART 응답 오류 (${esc(j.status)})</b><br>${esc(j.message || '')}`));
+
+    render(j.list || [], { label, year, reprtL });
+  }catch(err){
+    show(msg('err','⚠️', '조회 실패: ' + esc(err.message)));
+  }finally{ $('#go').disabled = false; }
+}
+
+const msg = (kind, icon, html) => `<div class="msg ${kind}">${icon}<div>${html}</div></div>`;
+const show = html => { $('#out').innerHTML = `<div class="card">${html}</div>`; };
+
+function render(rows, meta){
+  if (!rows.length) return show(msg('warn','📭','조회된 데이터가 없습니다.'));
+
+  // 모든 행에 등장하는 컬럼을 순서대로 모읍니다
+  const cols = [];
+  rows.forEach(r => Object.keys(r).forEach(k => { if (!cols.includes(k)) cols.push(k); }));
+
+  const head = cols.map(c =>
+    `<th class="${NUMISH.test(c) ? 'num' : ''}" title="${esc(c)}">${esc(LABEL[c] || c)}</th>`).join('');
+
+  const body = rows.map(r => '<tr>' + cols.map(c => {
+    const v = r[c] ?? '';
+    const isNum = NUMISH.test(c) && /^[-\d,.]+$/.test(String(v)) && String(v) !== '-';
+    return `<td class="${isNum ? 'num mono' : ''}${/^(rcept_no|corp_code|stlm_dt|birth_ym)$/.test(c) ? ' mono' : ''}">${esc(v)}</td>`;
+  }).join('') + '</tr>').join('');
+
+  $('#out').innerHTML = `
+  <div class="card">
+    <h2>${esc(meta.label)}</h2>
+    <p class="sub"><b>${esc(picked.name)}</b> · ${esc(meta.year)}년 ${esc(meta.reprtL)}
+      · 고유번호 <span class="mono">${esc(picked.code)}</span></p>
+    <p class="rowcount">${rows.length}건 · 컬럼 ${cols.length}개</p>
+    <div class="tablewrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <p class="footnote">
+      ${KRW_TIP} 컬럼 이름에 마우스를 올리면 DART 원래 항목명을 볼 수 있습니다.<br>
+      본 조회 내용은 회사가 제출한 공시서류의 일부 정보를 추출한 것으로,
+      <b>금융감독원은 정보의 정확성 및 완전성을 보장하지 않습니다.</b>
+      자세한 사항은 해당 보고서를 참조하시기 바랍니다.
+    </p>
+  </div>`;
+}
+</script>
+</body>
+</html>
