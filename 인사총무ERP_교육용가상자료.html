@@ -208,7 +208,9 @@ tr.total td{background:var(--surface-2); font-size:13.5px}
     <button class="navitem" data-page="leave">🌴 휴가 신청 <span style="opacity:.6">· 인사</span></button>
     <button class="navitem" data-page="supply">📦 비품 신청 <span style="opacity:.6">· 총무</span></button>
     <button class="navitem" data-page="pay">💰 급여명세 <span style="opacity:.6">· 급여</span></button>
-    <div class="navnote">새로고침하면 처음 상태로 돌아갑니다.<br>마음껏 눌러보세요.</div>
+    <div class="navnote">새로고침하면 처음 상태로 돌아갑니다.<br>마음껏 눌러보세요.
+      <div id="srcNote" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border)"></div>
+    </div>
   </nav>
   <main id="main"></main>
 </div>
@@ -223,7 +225,7 @@ tr.total td{background:var(--surface-2); font-size:13.5px}
 
 /* ── 1. 가상 데이터 ──────────────────────────────── */
 
-const DATA_EMP = [
+let DATA_EMP = [
   {id:'E001', name:'김서연', dept:'경영지원팀', grade:'부장', join:'2016-03-02', granted:20},
   {id:'E002', name:'박준호', dept:'경영지원팀', grade:'대리', join:'2021-07-01', granted:16},
   {id:'E003', name:'이하늘', dept:'경영지원팀', grade:'사원', join:'2024-01-15', granted:15},
@@ -239,7 +241,7 @@ const DATA_EMP = [
 ];
 
 // 휴가신청 24건 — 상태: 대기 / 승인 / 반려. 대기 건의 by·on 은 null(빈 값을 임의로 채우지 않음)
-const DATA_LEAVE_INIT = [
+let DATA_LEAVE_INIT = [
   {id:'L001',emp:'E001',type:'연차',start:'2026-06-15',end:'2026-06-17',days:3,  reason:'가족 여행',   status:'승인',by:'E002',on:'2026-06-10',note:null},
   {id:'L002',emp:'E004',type:'연차',start:'2026-06-22',end:'2026-06-26',days:5,  reason:'여름 휴가',   status:'승인',by:'E002',on:'2026-06-17',note:null},
   {id:'L003',emp:'E005',type:'연차',start:'2026-07-06',end:'2026-07-08',days:3,  reason:'개인 사유',   status:'승인',by:'E002',on:'2026-07-01',note:null},
@@ -266,7 +268,7 @@ const DATA_LEAVE_INIT = [
   {id:'L024',emp:'E010',type:'반차',start:'2026-08-21',end:'2026-08-21',days:0.5,reason:'개인 사유',   status:'반려',by:'E002',on:'2026-08-19',note:'일정 조정 요청'}
 ];
 
-const DATA_ITEM_INIT = [
+let DATA_ITEM_INIT = [
   {code:'S001', name:'A4 복사용지(1박스)', cat:'사무용품', price:24000, stock:32, safe:20},
   {code:'S002', name:'볼펜(12자루)',       cat:'사무용품', price:7200,  stock:15, safe:20},
   {code:'S003', name:'포스트잇(5패드)',    cat:'사무용품', price:5500,  stock:48, safe:15},
@@ -279,7 +281,7 @@ const DATA_ITEM_INIT = [
   {code:'S010', name:'물티슈(10팩)',       cat:'소모품',  price:12000, stock:40, safe:20}
 ];
 
-const DATA_SUPPLY_INIT = [
+let DATA_SUPPLY_INIT = [
   {id:'P001',emp:'E006',item:'S001',qty:2,reason:'팀 복사용지 보충',  status:'승인',by:'E002',on:'2026-08-03',note:null},
   {id:'P002',emp:'E003',item:'S003',qty:3,reason:'회의 메모용',      status:'승인',by:'E002',on:'2026-08-06',note:null},
   {id:'P003',emp:'E008',item:'S008',qty:4,reason:'탕비실 비치',      status:'승인',by:'E002',on:'2026-08-11',note:null},
@@ -303,10 +305,57 @@ const DATA_SUPPLY_INIT = [
 // 급여명세 12건 — 12명 × 2026년 9월 귀속분. 금액은 전 직원 동일(교육용 단순화).
 // ⚠️ 실제 세금·4대보험은 계산하지 않았습니다. '공제'는 설명용 고정 금액 한 항목뿐입니다.
 //    지급액 = 기본급 + 수당 − 공제.  급여는 '확정된 과거 기록'이므로 계산하지 않고 저장합니다.
-const DATA_PAY = DATA_EMP.map(e => ({
+let DATA_PAY = DATA_EMP.map(e => ({
   id:'PY202609-' + e.id, emp:e.id, month:'2026-09', payDate:'2026-10-10',
   base:3000000, allow:200000, deduct:100000, net:3100000, status:'확정'
 }));
+
+/* ── 1-1. 외부 데이터 파일 불러오기 ─────────────────
+   data/가상_인사총무.json 을 읽어 위 내장 데이터를 대체합니다.
+
+   ⚠️ 브라우저 보안 정책상, 파일을 그냥 더블클릭해서 열면(file://)
+      외부 파일을 읽을 수 없습니다. 그때는 위 내장 데이터로 작동합니다.
+      로컬 서버로 열면(http://) JSON 파일을 실제로 읽어옵니다.
+      → 어느 쪽이든 화면과 숫자는 완전히 같습니다.                    */
+
+let DATA_SOURCE = { 방식:'내장', 설명:'파일 안에 들어있는 데이터로 실행 중' };
+
+async function loadExternalData(){
+  // 더블클릭으로 연 경우(file://)는 어차피 막히므로 시도조차 하지 않습니다.
+  // 시도하면 브라우저 콘솔에 불필요한 오류가 남습니다.
+  if(location.protocol === 'file:'){
+    DATA_SOURCE = { 방식:'내장',
+      설명:'파일을 직접 열어 내장 데이터로 실행 중 · 로컬 서버로 열면 JSON 파일을 읽습니다' };
+    return false;
+  }
+  try{
+    const res = await fetch('data/가상_인사총무.json', { cache:'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+
+    // 한글 항목명 → 앱 내부 이름으로 변환
+    DATA_EMP = j.직원.map(r => ({ id:r.사번, name:r.이름, dept:r.부서,
+      grade:r.직급, join:r.입사일, granted:r.연차부여일수 }));
+    DATA_LEAVE_INIT = j.휴가신청.map(r => ({ id:r.신청번호, emp:r.사번, type:r.휴가종류,
+      start:r.시작일, end:r.종료일, days:r.일수, reason:r.사유,
+      status:r.상태, by:r.처리자, on:r.처리일, note:r.비고 }));
+    DATA_ITEM_INIT = j.비품품목.map(r => ({ code:r.품목코드, name:r.품목명, cat:r.분류,
+      price:r.단가, stock:r.현재고, safe:r.안전재고 }));
+    DATA_SUPPLY_INIT = j.비품신청.map(r => ({ id:r.신청번호, emp:r.사번, item:r.품목코드,
+      qty:r.수량, reason:r.사유, status:r.상태, by:r.처리자, on:r.처리일, note:r.비고 }));
+    DATA_PAY = j.급여명세.map(r => ({ id:r.급여번호, emp:r.사번, month:r.귀속연월,
+      payDate:r.지급일, base:r.기본급, allow:r.수당, deduct:r.공제,
+      net:r.지급액, status:r.상태 }));
+
+    DATA_SOURCE = { 방식:'파일',
+      설명:`data/가상_인사총무.json 에서 불러옴 · 직원 ${DATA_EMP.length} · 휴가 ${DATA_LEAVE_INIT.length} · 비품 ${DATA_ITEM_INIT.length}종/${DATA_SUPPLY_INIT.length}건 · 급여 ${DATA_PAY.length}` };
+    return true;
+  }catch(err){
+    DATA_SOURCE = { 방식:'내장',
+      설명:'외부 파일을 읽지 못해 내장 데이터로 실행 중 (' + err.message + ')' };
+    return false;
+  }
+}
 
 /* ── 2. 상태 ─────────────────────────────────────── */
 
@@ -953,6 +1002,11 @@ function render(){
   document.querySelectorAll('.navitem').forEach(b =>
     b.classList.toggle('on', b.dataset.page === page));
 
+  // 이 화면의 숫자가 어디서 왔는지 표시 (교육용)
+  const src = document.getElementById('srcNote');
+  if(src) src.innerHTML = (DATA_SOURCE.방식 === '파일' ? '📂 <b>데이터 파일</b>' : '📦 <b>내장 데이터</b>')
+    + '<br><span style="opacity:.8">' + esc(DATA_SOURCE.설명) + '</span>';
+
   const body = page === 'home'  ? (role === 'admin' ? viewHomeAdmin() : viewHomeStaff())
              : page === 'leave' ? viewLeave()
              : page === 'pay'   ? viewPay()
@@ -1090,8 +1144,12 @@ document.addEventListener('click', e => {
   }
 });
 
-resetData();
-render();
+// 외부 데이터 파일을 먼저 시도하고, 실패하면 내장 데이터로 그대로 실행합니다.
+(async () => {
+  await loadExternalData();
+  resetData();
+  render();
+})();
 </script>
 </body>
 </html>

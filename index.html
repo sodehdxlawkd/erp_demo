@@ -1,0 +1,102 @@
+<!-- ============================================================
+     🎓 교육용 가상 자료 (EDUCATIONAL / FICTIONAL DATA ONLY)
+     가상 회사 「한빛상사(주)」 · 실존 회사·개인·급여와 무관합니다.
+
+     이 파일은 '입구'입니다. 실제 앱은 아래 파일입니다.
+       인사총무ERP_교육용가상자료.html
+
+     앱 파일명을 index.html 로 바꾸지 않는 이유:
+     파일명 자체가 PRD §8의 '교육용 가상 자료 표시 4곳' 중 하나이기 때문입니다.
+     ============================================================ -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>가상 인사총무 ERP — 교육용</title>
+<!-- 자바스크립트가 막혀 있어도 1초 뒤 자동 이동 -->
+<meta http-equiv="refresh" content="1; url=%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4ERP_%EA%B5%90%EC%9C%A1%EC%9A%A9%EA%B0%80%EC%83%81%EC%9E%90%EB%A3%8C.html">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f5f5f2; --surface:#fcfcfb; --border:#e3e2dd;
+  --text-1:#0b0b0b; --text-2:#52514e; --text-3:#85847e; --series-1:#2a78d6;
+  --banner-bg:#fff3d1; --banner-ink:#6b4e00; --banner-bd:#e8d08a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --border:#33332f;
+    --text-1:#ffffff; --text-2:#c3c2b7; --text-3:#8f8e85; --series-1:#3987e5;
+    --banner-bg:#3a2f10; --banner-ink:#f0d99a; --banner-bd:#5c4a1a;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text-1); min-height:100vh;
+  font-family:"Pretendard","Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:14px; line-height:1.55;
+  display:flex; flex-direction:column;
+}
+#edu-banner{
+  background:var(--banner-bg); color:var(--banner-ink);
+  border-bottom:1px solid var(--banner-bd);
+  padding:7px 16px; font-size:12.5px; font-weight:600; text-align:center;
+}
+main{
+  flex:1; display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.card{
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:32px; max-width:520px; width:100%; text-align:center;
+}
+h1{font-size:20px; margin:0 0 6px; letter-spacing:-.02em}
+p.sub{margin:0 0 24px; color:var(--text-2); font-size:13px}
+a.go{
+  display:inline-block; background:var(--series-1); color:#fff; text-decoration:none;
+  padding:11px 22px; border-radius:8px; font-size:14px; font-weight:600;
+}
+a.go:hover{filter:brightness(1.08)}
+.note{
+  margin-top:24px; padding-top:18px; border-top:1px solid var(--border);
+  font-size:12px; color:var(--text-3); text-align:left; line-height:1.7;
+}
+.note b{color:var(--text-2)}
+code{
+  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  background:var(--bg); padding:1px 5px; border-radius:4px; font-size:11.5px;
+}
+</style>
+</head>
+<body>
+<div id="edu-banner">🎓 교육용 가상 자료 — 실제 인사·급여 정보가 아닙니다 · 가상 회사 「한빛상사(주)」</div>
+
+<main>
+  <div class="card">
+    <h1>가상 인사총무 ERP</h1>
+    <p class="sub">잠시 후 자동으로 이동합니다. 넘어가지 않으면 아래를 눌러주세요.</p>
+
+    <a class="go" href="%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4ERP_%EA%B5%90%EC%9C%A1%EC%9A%A9%EA%B0%80%EC%83%81%EC%9E%90%EB%A3%8C.html">
+      앱 열기 →
+    </a>
+
+    <div class="note">
+      <b>이 파일은 입구입니다.</b> 실제 앱은
+      <code>인사총무ERP_교육용가상자료.html</code> 입니다.<br>
+      파일명 자체가 &lsquo;교육용 가상 자료&rsquo; 표시 중 하나라서 이름을 바꾸지 않았습니다.
+      <br><br>
+      <b>여는 방법 2가지</b> — 숫자는 어느 쪽이든 같습니다.<br>
+      · 앱 파일을 <b>더블클릭</b> → 📦 내장 데이터로 실행<br>
+      · <code>node 로컬서버.mjs</code> 실행 후 <code>http://127.0.0.1:8123/</code> 접속
+      → 📂 <code>data/가상_인사총무.json</code> 파일을 실제로 읽음
+    </div>
+  </div>
+</main>
+
+<script>
+  // 바로 이동 (meta refresh보다 빠름)
+  location.replace('%EC%9D%B8%EC%82%AC%EC%B4%9D%EB%AC%B4ERP_%EA%B5%90%EC%9C%A1%EC%9A%A9%EA%B0%80%EC%83%81%EC%9E%90%EB%A3%8C.html');
+</script>
+</body>
+</html>
