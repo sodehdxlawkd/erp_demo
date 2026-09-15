@@ -47,4 +47,5 @@ npm-debug.log*
 # 압축해서 내보낸 결과물 (원본이 이 폴더에 이미 있음)
 *.zip
 
-.vercel
+# 버셀 CLI가 만드는 로컬 상태 폴더
+.vercel/
