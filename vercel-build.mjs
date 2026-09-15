@@ -36,10 +36,18 @@ const PATCH = new Set(['index.html', '인사총무ERP_교육용가상자료.html
 
 rmSync(OUT, { recursive: true, force: true });
 
-function put(to, body){
+/* 파일을 그대로 복사합니다 */
+function copy(from, to){
   const path = join(OUT, to);
   mkdirSync(dirname(path), { recursive: true });
-  typeof body === 'string' ? writeFileSync(path, body, 'utf8') : copyFileSync(body, path);
+  copyFileSync(from, path);
+}
+
+/* 내용을 고쳐서 새 파일로 씁니다 */
+function write(to, text){
+  const path = join(OUT, to);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, text, 'utf8');
 }
 
 /* 파일 안의 경로를 새 이름으로 바꿉니다.
@@ -56,13 +64,26 @@ function patch(text){
 
 const done = [];
 for (const [from, to] of Object.entries(RENAME)) {
-  put(to, PATCH.has(from) ? patch(readFileSync(from, 'utf8')) : from);
+  if (PATCH.has(from)) write(to, patch(readFileSync(from, 'utf8')));
+  else                 copy(from, to);
   done.push(`${from}  →  ${to}`);
 }
 for (const f of ASIS) {
-  put(f, PATCH.has(f) ? patch(readFileSync(f, 'utf8')) : f);
+  if (PATCH.has(f)) write(f, patch(readFileSync(f, 'utf8')));
+  else              copy(f, f);
   done.push(`${f}  (이름 그대로)`);
+}
+
+/* 만든 파일이 원본과 같은지 확인합니다 — 내용이 비거나 뒤바뀌면 배포 전에 멈춥니다 */
+for (const [from, to] of Object.entries({ ...RENAME, ...Object.fromEntries(ASIS.map(f => [f, f])) })) {
+  const made = readFileSync(join(OUT, to));
+  const 원본 = readFileSync(from);
+  if (made.length === 0) throw new Error(`배포본이 비었습니다: ${to}`);
+  if (!PATCH.has(from) && !made.equals(원본)) throw new Error(`복사가 잘못됐습니다: ${from} → ${to}`);
+  if (PATCH.has(from) && Math.abs(made.length - 원본.length) > 원본.length * 0.1)
+    throw new Error(`내용이 너무 많이 달라졌습니다: ${from} → ${to}`);
 }
 
 console.log('배포용 사본을 만들었습니다 — ' + OUT + '/');
 done.forEach(l => console.log('  ' + l));
+console.log('  ✅ 원본과 대조 확인 완료');
