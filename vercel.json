@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "node vercel-build.mjs",
+  "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/app", "destination": "/인사총무ERP_교육용가상자료.html" }
+    { "source": "/app", "destination": "/edu-fictional-hr-erp.html" }
   ],
   "headers": [
     {
