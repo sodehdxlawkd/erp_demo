@@ -208,6 +208,7 @@ tr.total td{background:var(--surface-2); font-size:13.5px}
     <button class="navitem" data-page="leave">🌴 휴가 신청 <span style="opacity:.6">· 인사</span></button>
     <button class="navitem" data-page="supply">📦 비품 신청 <span style="opacity:.6">· 총무</span></button>
     <button class="navitem" data-page="pay">💰 급여명세 <span style="opacity:.6">· 급여</span></button>
+    <button class="navitem" data-page="ai">🤖 AI 연결 시험 <span style="opacity:.6">· 실험</span></button>
     <div class="navnote">새로고침하면 처음 상태로 돌아갑니다.<br>마음껏 눌러보세요.
       <div id="srcNote" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border)"></div>
     </div>
@@ -992,6 +993,95 @@ function payAdmin(){
 
 /* ── 9. 렌더 ─────────────────────────────────────── */
 
+/* ── 🤖 AI(Gemini) 연결 시험 ──────────────────────────────
+   API 키가 브라우저에 들어오지 않도록, 구글 호출은 로컬서버.mjs 가 대신 합니다.
+   그래서 이 화면은 `node 로컬서버.mjs` 로 열었을 때만 작동합니다.
+   더블클릭(file://)이나 인터넷 배포본에서는 '사용할 수 없음'으로 표시됩니다.
+   ⚠️ 여기 답변은 외부 AI가 만든 글이며, 이 앱의 가상 인사자료와 무관합니다. */
+
+const AI_EXAMPLE = '인사총무 담당자에게 도움이 되는 팁을 한 문장으로 알려줘.';
+
+function viewAi(){
+  return `
+  <h2 class="page">🤖 AI 연결 시험</h2>
+  <p class="pagesub">Gemini API 키가 제대로 연결됐는지 확인하는 <b>실험용 화면</b>입니다.</p>
+
+  <div class="grid cols2">
+    <div class="card">
+      <h3>질문 보내기</h3>
+      <p class="sub">문장을 고쳐서 보내도 됩니다</p>
+      <div class="form">
+        <div class="field"><label for="aiQ">질문</label>
+          <input type="text" id="aiQ" value="${esc(AI_EXAMPLE)}"></div>
+        <div class="field"><button class="btn btn-primary" id="aiSend" style="width:100%">보내기</button></div>
+      </div>
+      <div id="aiOut" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h3>지금 쓸 수 있나</h3>
+      <p class="sub">키가 있는지만 확인합니다 · 키 값은 화면으로 내려오지 않습니다</p>
+      <div id="aiState"><div class="alertbox info">⏳<span>확인 중…</span></div></div>
+      <div class="alertbox info" style="margin-top:12px">🔑
+        <span><b>왜 로컬 서버가 필요한가요?</b><br>
+        API 키를 HTML에 넣으면 페이지 소스에 그대로 보입니다. 그래서 키는
+        내 컴퓨터의 <code>로컬서버.mjs</code> 안에만 두고, 서버가 대신 구글에 물어봅니다.</span>
+      </div>
+      <div class="alertbox info" style="margin-top:10px">🎓
+        <span>이 답변은 <b>외부 AI가 만든 글</b>입니다. 이 앱의 인사·급여 가상 자료와는 무관합니다.</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* 키가 준비됐는지 확인해서 오른쪽 카드에 표시합니다 */
+async function checkAiStatus(){
+  const box = document.getElementById('aiState');
+  if(!box) return;
+  const show = (kind, icon, html) => box.innerHTML = `<div class="alertbox ${kind}">${icon}<span>${html}</span></div>`;
+  try{
+    const res = await fetch('/api/ai/status', { cache:'no-store' });
+    if(!res.ok) throw new Error();
+    const j = await res.json();
+    if(j.준비됨) show('ok','✅', `<b>사용할 수 있습니다.</b><br>모델 <code>${esc(j.모델)}</code>`);
+    else show('info','🔑', '<b>키를 찾지 못했습니다.</b><br>프로젝트 폴더의 <code>.env</code> 를 확인해 주세요.');
+  }catch{
+    show('info','📦', '<b>지금은 사용할 수 없습니다.</b><br>'
+      + '<code>node 로컬서버.mjs</code> 로 열었을 때만 작동합니다.');
+  }
+}
+
+async function askAi(){
+  const q   = document.getElementById('aiQ').value.trim();
+  const out = document.getElementById('aiOut');
+  const btn = document.getElementById('aiSend');
+  const show = (kind, icon, html) => out.innerHTML = `<div class="alertbox ${kind}">${icon}<span>${html}</span></div>`;
+
+  if(!q) return show('info','✏️','질문을 입력해 주세요.');
+
+  btn.disabled = true;
+  const label = btn.textContent; btn.textContent = '보내는 중…';
+  show('info','⏳','구글에 물어보는 중입니다. 몇 초 걸립니다…');
+
+  try{
+    const res = await fetch('/api/ai/ask', {
+      method : 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body   : JSON.stringify({ question: q })
+    });
+    const j = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(j.error || `호출 실패 (HTTP ${res.status})`);
+    show('ok','✅',
+      `<b>연결 성공</b> · 모델 <code>${esc(j.모델)}</code> · ${n0(j.걸린시간)}ms<br><br>`
+      + esc(j.답변).replace(/\n/g, '<br>'));
+  }catch(err){
+    show('info','⚠️', '<b>보내지 못했습니다.</b><br>' + esc(err.message || err)
+      + '<br><span style="opacity:.8">파일을 더블클릭해서 열었다면 <code>node 로컬서버.mjs</code> 로 열어 주세요.</span>');
+  }finally{
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+
 function render(){
   const me = emp(ME), ad = emp(ADMIN);
   document.getElementById('roleName').textContent =
@@ -1010,6 +1100,7 @@ function render(){
   const body = page === 'home'  ? (role === 'admin' ? viewHomeAdmin() : viewHomeStaff())
              : page === 'leave' ? viewLeave()
              : page === 'pay'   ? viewPay()
+             : page === 'ai'    ? viewAi()
              : viewSupply();
 
   const msg = flash
@@ -1017,6 +1108,7 @@ function render(){
   document.getElementById('main').innerHTML = msg + body;
   flash = null;
   wireTooltips();
+  if(page === 'ai') checkAiStatus();     // 키가 준비됐는지 화면에 표시
 }
 
 function wireTooltips(){
@@ -1091,6 +1183,7 @@ document.addEventListener('click', e => {
   if(t.dataset.page){ page = t.dataset.page; return render(); }
   if(t.id === 'lvSubmit') return submitLeave();
   if(t.id === 'spSubmit') return submitSupply();
+  if(t.id === 'aiSend')   return askAi();
 
   const d = t.dataset;
 
